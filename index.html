@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Range Session</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Mono', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.4;
+    color: #111;
+    background: #f5f5f0;
+    min-height: 100vh;
+  }
+
+  /* ── layout ── */
+  .layout {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 32px 24px;
+  }
+
+  /* ── config panel ── */
+  .config {
+    position: fixed;
+    top: 32px;
+    right: calc(50% + 260px);
+    width: 220px;
+    background: #fff;
+    padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  }
+  .config-title {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #999;
+    border-bottom: 1px dashed #ddd;
+    padding-bottom: 8px;
+    margin-bottom: 14px;
+  }
+  .config-group {
+    margin-bottom: 16px;
+  }
+  .config-group:last-of-type { margin-bottom: 14px; }
+  .config-label {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #999;
+    margin-bottom: 6px;
+  }
+  .balls-input {
+    width: 100%;
+    padding: 6px 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 1px;
+    border: 1px solid #ddd;
+    background: #fff;
+    color: #111;
+    text-align: center;
+    outline: none;
+    margin-bottom: 4px;
+    -moz-appearance: textfield;
+  }
+  .balls-input::-webkit-inner-spin-button,
+  .balls-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .balls-input:focus { border-color: #111; }
+  .pill-row {
+    display: flex;
+    gap: 3px;
+  }
+  .pill-sm {
+    flex: 1;
+    padding: 4px 0;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    border: 1px solid #ddd;
+    background: #fff;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+    color: #888;
+  }
+  .pill-sm:hover { border-color: #999; color: #111; }
+
+  .pill-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .pill {
+    padding: 5px 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    border: 1px solid #ddd;
+    background: #fff;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.15s;
+    text-align: left;
+  }
+  .pill:hover { border-color: #999; background: #fafafa; }
+  .pill.active {
+    background: #111;
+    color: #fff;
+    border-color: #111;
+  }
+
+  .config-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    border-top: 1px dashed #ddd;
+    padding-top: 14px;
+  }
+  .btn {
+    padding: 8px 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+  }
+  .btn:active { opacity: 0.7; }
+  .btn-gen { background: #111; color: #fff; }
+  .btn-print { background: #e8e8e4; color: #555; }
+
+  /* ── receipt ── */
+  .receipt {
+    width: 480px;
+    flex-shrink: 0;
+    background: #fff;
+    padding: 32px 28px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  }
+
+  .receipt-header {
+    text-align: center;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed #999;
+    margin-bottom: 6px;
+  }
+  .receipt-header h1 {
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+  .receipt-date {
+    font-size: 13px;
+    color: #888;
+    margin-top: 3px;
+  }
+  .receipt-focus {
+    font-size: 11px;
+    color: #aaa;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .section-label {
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #999;
+    text-align: center;
+    padding: 10px 0 5px;
+  }
+
+  .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 4px 0;
+  }
+  .row-num {
+    color: #aaa;
+    min-width: 28px;
+  }
+  .row-dist {
+    font-weight: 500;
+    white-space: nowrap;
+    min-width: 60px;
+  }
+  .row-cond {
+    flex: 1;
+    padding: 0 12px;
+    color: #555;
+    font-size: 13px;
+  }
+  .row-scene {
+    color: #888;
+    font-size: 10px;
+    font-style: italic;
+    padding-left: 30px;
+    padding-bottom: 2px;
+  }
+  .row-hole {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #bbb;
+    padding: 8px 0 2px;
+    border-top: 1px dotted #e5e5e0;
+    margin-top: 4px;
+  }
+  .row-hole:first-of-type { border-top: none; margin-top: 0; }
+
+  .dashes {
+    text-align: center;
+    color: #ccc;
+    font-size: 12px;
+    padding: 6px 0;
+    letter-spacing: 2px;
+  }
+
+  .receipt-footer {
+    border-top: 1px dashed #999;
+    margin-top: 10px;
+    padding-top: 8px;
+    text-align: center;
+    font-size: 12px;
+    color: #999;
+    letter-spacing: 1px;
+  }
+
+  /* ── responsive: tablet ── */
+  @media (max-width: 980px) {
+    .layout { flex-direction: column; align-items: center; padding: 16px; }
+    .config {
+      position: static;
+      right: auto;
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 16px;
+      margin: 0 auto 12px;
+    }
+    .config-title { width: 100%; margin-bottom: 4px; }
+    .config-group { margin-bottom: 0; flex: 1; min-width: 140px; }
+    .pill-stack { flex-direction: row; flex-wrap: wrap; }
+    .config-actions { flex-direction: row; width: 100%; border-top: none; padding-top: 0; }
+    .config-actions .btn { flex: 1; }
+    .receipt { width: 100%; max-width: 480px; }
+  }
+
+  /* ── responsive: phone ── */
+  @media (max-width: 500px) {
+    .layout { padding: 10px; }
+    .config {
+      flex-direction: column;
+      gap: 10px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+    .config-group { min-width: 0; width: 100%; }
+    .config-label { font-size: 11px; margin-bottom: 8px; }
+    .balls-input { font-size: 16px; padding: 10px; }
+    .pill-row { gap: 6px; }
+    .pill-sm {
+      padding: 10px 0;
+      font-size: 12px;
+    }
+    .pill-stack { flex-direction: row; flex-wrap: wrap; gap: 6px; }
+    .pill {
+      padding: 10px 12px;
+      font-size: 12px;
+      flex: 1 1 calc(50% - 3px);
+      text-align: center;
+    }
+    .config-actions { gap: 8px; padding-top: 4px; }
+    .btn {
+      padding: 14px 10px;
+      font-size: 12px;
+    }
+
+    .receipt {
+      padding: 20px 16px;
+      max-width: none;
+      width: 100%;
+    }
+    .receipt-header h1 { font-size: 18px; letter-spacing: 2px; }
+    .receipt-date { font-size: 12px; }
+    .receipt-focus { font-size: 10px; }
+    .section-label { font-size: 11px; padding: 8px 0 4px; }
+
+    .row {
+      flex-wrap: wrap;
+      padding: 5px 0;
+    }
+    .row-num {
+      min-width: 24px;
+      font-size: 12px;
+    }
+    .row-dist {
+      font-size: 14px;
+      min-width: 50px;
+    }
+    .row-cond {
+      font-size: 12px;
+      padding: 0 8px;
+    }
+    .row-scene {
+      width: 100%;
+      padding-left: 24px;
+      font-size: 10px;
+      padding-bottom: 3px;
+    }
+    .row-hole {
+      font-size: 10px;
+      padding: 6px 0 2px;
+    }
+
+    .dashes { font-size: 11px; padding: 5px 0; }
+    .receipt-footer { font-size: 11px; }
+  }
+
+  /* ── print ── */
+  @media print {
+    @page {
+      size: letter;
+      margin: 0.3in 0.35in;
+    }
+    body { background: none; font-size: 15px; line-height: 1.3; }
+    .config { display: none; }
+    .layout { padding: 0; display: block; width: 100%; }
+    .receipt {
+      box-shadow: none;
+      width: 100% !important;
+      max-width: none;
+      margin: 0;
+      padding: 0;
+      columns: 2;
+      column-gap: 40px;
+      column-rule: 1px solid #bbb;
+    }
+    .receipt-header { padding-bottom: 5px; margin-bottom: 4px; column-span: all; }
+    .receipt-header h1 { font-size: 22px; }
+    .receipt-date { font-size: 12px; }
+    .receipt-focus { font-size: 11px; }
+    .row { padding: 2px 0; line-height: 1.4; break-inside: avoid; }
+    .row-num { font-size: 14px; }
+    .row-dist { font-size: 16px; font-weight: 500; }
+    .row-cond { font-size: 15px; }
+    .row-scene { font-size: 12px; padding-bottom: 3px; padding-left: 28px; break-before: avoid; }
+    .row-hole { font-size: 11px; padding: 5px 0 2px; break-after: avoid; }
+    .section-label { padding: 5px 0 3px; font-size: 12px; }
+    .dashes { padding: 3px 0; font-size: 11px; }
+    .receipt-footer { margin-top: 5px; padding-top: 5px; font-size: 12px; column-span: all; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <div class="config">
+    <div class="config-title">Setup</div>
+    <div class="config-group">
+      <div class="config-label">Balls</div>
+      <input type="number" id="balls-input" class="balls-input" value="50" min="10" max="200">
+      <div class="pill-row" id="balls-quick">
+        <div class="pill-sm" data-val="25">25</div>
+        <div class="pill-sm" data-val="50">50</div>
+        <div class="pill-sm" data-val="75">75</div>
+        <div class="pill-sm" data-val="100">100</div>
+      </div>
+    </div>
+    <div class="config-group">
+      <div class="config-label">Focus</div>
+      <div class="pill-stack" id="focus-group">
+        <div class="pill active" data-val="full">Full Bag</div>
+        <div class="pill" data-val="wedges">Wedges</div>
+        <div class="pill" data-val="short">Short Irons</div>
+        <div class="pill" data-val="mid">Mid Irons</div>
+        <div class="pill" data-val="long">Long Game</div>
+      </div>
+    </div>
+    <div class="config-actions">
+      <button class="btn btn-gen" onclick="generate()">Generate</button>
+      <button class="btn btn-print" onclick="window.print()">Print</button>
+    </div>
+  </div>
+
+  <div class="receipt" id="receipt"></div>
+</div>
+
+<script>
+// [min, max] = distance range where this scenario makes sense
+const SCENARIOS = [
+  // ── water ──
+  { cond: 'water left',           scene: 'Pond left',                                         min: 100, max: 290 },
+  { cond: 'water right',          scene: 'Creek right',                                       min: 100, max: 290 },
+  { cond: 'water short',          scene: 'Carry over water',                                  min: 80,  max: 200 },
+  { cond: 'water long',           scene: 'Water behind green',                                min: 100, max: 200 },
+  { cond: 'water both sides',     scene: 'Water left and right',                              min: 140, max: 250 },
+
+  // ── bunkers ──
+  { cond: 'bunker left',          scene: 'Greenside bunker left',                             min: 60,  max: 200 },
+  { cond: 'bunker right',         scene: 'Pot bunker short right',                            min: 60,  max: 200 },
+  { cond: 'bunker short',         scene: 'Carry the bunker',                                  min: 130, max: 260 },
+  { cond: 'bunker front',         scene: 'Bunker in front of green',                          min: 70,  max: 180 },
+  { cond: 'bunker cluster',       scene: 'Bunkers around the green',                          min: 80,  max: 200 },
+  { cond: 'fairway bunker',       scene: 'Fairway bunker in the landing zone',                min: 180, max: 260 },
+  { cond: 'cross bunker',         scene: 'Bunker across the fairway',                         min: 150, max: 240 },
+
+  // ── OB / trouble ──
+  { cond: 'OB left',              scene: 'OB left',                                           min: 150, max: 290 },
+  { cond: 'OB right',             scene: 'OB right',                                          min: 150, max: 290 },
+  { cond: 'hazard left',          scene: 'Lateral hazard left',                                min: 150, max: 290 },
+  { cond: 'hazard right',         scene: 'Red stakes right',                                   min: 150, max: 290 },
+  { cond: 'drop zone',            scene: 'Penalty area, drop zone if you miss',               min: 120, max: 220 },
+
+  // ── trees ──
+  { cond: 'trees left',           scene: 'Trees tight left',                                  min: 120, max: 290 },
+  { cond: 'trees right',          scene: 'Trees right',                                       min: 120, max: 290 },
+  { cond: 'trees both sides',     scene: 'Trees both sides',                                  min: 140, max: 260 },
+  { cond: 'overhanging branch',   scene: 'Low branch in the way',                             min: 80,  max: 200 },
+  { cond: 'tree in line',         scene: 'Tree in the way',                                   min: 100, max: 220 },
+
+  // ── pin positions ──
+  { cond: 'pin front left',       scene: 'Front left behind bunker',                          min: 70,  max: 180 },
+  { cond: 'pin front right',      scene: 'Front right, slope falls off',                      min: 70,  max: 180 },
+  { cond: 'pin front center',     scene: 'Front center',                                      min: 70,  max: 170 },
+  { cond: 'pin back left',        scene: 'Back left shelf',                                   min: 90,  max: 200 },
+  { cond: 'pin back right',       scene: 'Back right, club up',                               min: 90,  max: 200 },
+  { cond: 'pin back center',      scene: 'Back center',                                       min: 90,  max: 200 },
+  { cond: 'pin tucked left',      scene: 'Tucked left behind trap',                           min: 70,  max: 170 },
+  { cond: 'pin tucked right',     scene: 'Tucked right, aim center',                          min: 70,  max: 170 },
+  { cond: 'pin middle',           scene: 'Center green',                                      min: 70,  max: 200 },
+  { cond: 'pin on shelf',         scene: 'Pin on upper tier',                                  min: 80,  max: 180 },
+  { cond: 'pin on slope',         scene: 'Pin on side slope',                                  min: 80,  max: 180 },
+  { cond: 'pin Sunday',           scene: 'Back right, tough pin',                              min: 100, max: 200 },
+
+  // ── wind ──
+  { cond: 'wind',                 scene: 'Into wind',                                          min: 70,  max: 290 },
+  { cond: 'wind',                 scene: 'Downwind',                                           min: 70,  max: 290 },
+  { cond: 'wind',                 scene: 'Crosswind',                                          min: 70,  max: 290 },
+
+  // ── shot shape ──
+  { cond: 'draw',                 scene: 'Dogleg left, draw it',                               min: 150, max: 290 },
+  { cond: 'fade',                 scene: 'Left to right',                                      min: 120, max: 250 },
+  { cond: 'punch',                scene: 'Keep it low',                                        min: 60,  max: 180 },
+  { cond: 'knockdown',            scene: 'Three-quarter, take off',                            min: 70,  max: 180 },
+  { cond: 'high ball',            scene: 'Need height',                                        min: 60,  max: 160 },
+  { cond: 'cut',                  scene: 'Cut against the slope',                              min: 80,  max: 200 },
+  { cond: 'straight',             scene: 'Straight, no shape',                                 min: 80,  max: 250 },
+  { cond: 'hold against slope',   scene: 'Green tilts, hold your line',                        min: 80,  max: 190 },
+
+  // ── elevation (imagined target) ──
+  { cond: 'uphill',               scene: 'Elevated green, plays long',                         min: 80,  max: 200 },
+  { cond: 'downhill',             scene: 'Downhill, plays short',                              min: 80,  max: 200 },
+  { cond: 'severely uphill',      scene: 'Way uphill, two clubs more',                         min: 100, max: 180 },
+  { cond: 'slightly downhill',    scene: 'Slightly downhill, half club less',                   min: 80,  max: 200 },
+
+  // ── fairway / tee shots ──
+  { cond: 'tight fairway',        scene: 'Narrow fairway',                                     min: 180, max: 290 },
+  { cond: 'wide fairway',         scene: 'Wide open',                                          min: 200, max: 290 },
+  { cond: 'landing zone',         scene: 'Par 5 tee shot, find the fairway',                   min: 200, max: 290 },
+  { cond: 'lay up',               scene: 'Lay up, leave a full wedge',                         min: 140, max: 220 },
+  { cond: 'dogleg left',          scene: 'Dogleg left',                                        min: 200, max: 270 },
+  { cond: 'dogleg right',         scene: 'Dogleg right',                                       min: 200, max: 270 },
+  { cond: 'forced carry',         scene: 'Forced carry off the tee',                           min: 180, max: 260 },
+  { cond: 'split fairway',        scene: 'Split fairway',                                      min: 200, max: 270 },
+  { cond: 'reachable par 4',      scene: 'Short par 4, go for it',                             min: 240, max: 290 },
+  { cond: 'long par 3',           scene: 'Long par 3, aim middle',                             min: 180, max: 230 },
+  { cond: 'short par 3',          scene: 'Short par 3',                                        min: 100, max: 160 },
+
+  // ── green / approach ──
+  { cond: 'narrow gap',           scene: 'Gap between trees',                                  min: 80,  max: 200 },
+  { cond: 'elevated green',       scene: 'Green above you',                                    min: 90,  max: 200 },
+  { cond: 'false front',          scene: 'False front, carry it',                              min: 80,  max: 180 },
+  { cond: 'two-tiered green',     scene: 'Two tiers',                                          min: 80,  max: 190 },
+  { cond: 'shallow green',        scene: 'Shallow green, 15 yards deep',                       min: 70,  max: 170 },
+  { cond: 'deep green',           scene: 'Deep green, 40 yards',                               min: 90,  max: 200 },
+  { cond: 'back-to-front slope',  scene: 'Green slopes toward you',                            min: 70,  max: 180 },
+  { cond: 'front-to-back slope',  scene: 'Green runs away from you',                           min: 70,  max: 180 },
+  { cond: 'firm greens',          scene: 'Firm greens, expect rollout',                         min: 70,  max: 200 },
+  { cond: 'soft greens',          scene: 'Soft greens, ball will stop',                         min: 70,  max: 200 },
+
+  // ── miss strategy ──
+  { cond: 'miss right ok',        scene: 'Right is safe',                                      min: 80,  max: 200 },
+  { cond: 'miss left ok',         scene: 'Left is safe',                                       min: 80,  max: 200 },
+  { cond: 'miss short ok',        scene: 'Don\'t go long',                                     min: 70,  max: 180 },
+  { cond: 'don\'t go long',       scene: 'Runoff behind green',                                min: 70,  max: 180 },
+  { cond: 'miss long ok',         scene: 'Short is dead, long is fine',                        min: 80,  max: 190 },
+  { cond: 'avoid short side',     scene: 'Play to the fat side',                               min: 70,  max: 180 },
+  { cond: 'bail out area',        scene: 'Bail out area right',                                min: 80,  max: 200 },
+  { cond: 'no miss',              scene: 'Trouble everywhere',                                 min: 90,  max: 200 },
+
+  // ── distance control / feel ──
+  { cond: 'half swing',           scene: 'Half swing',                                         min: 30,  max: 90 },
+  { cond: '3/4 swing',            scene: 'Three-quarter swing',                                min: 50,  max: 140 },
+  { cond: 'full send',            scene: 'Full swing',                                         min: 150, max: 290 },
+  { cond: 'between clubs',        scene: 'In-between yardage, choke down',                     min: 80,  max: 190 },
+  { cond: 'stock shot',           scene: 'Stock yardage',                                      min: 80,  max: 200 },
+  { cond: 'hit it full',          scene: 'Full club',                                          min: 100, max: 200 },
+
+  // ── scoring / pressure (mental game) ──
+  { cond: 'birdie look',          scene: 'Wedge in, go at the pin',                            min: 60,  max: 130 },
+  { cond: 'safe play',            scene: 'Avoid bogey',                                        min: 80,  max: 200 },
+  { cond: 'go for it',            scene: 'Par 5 in two',                                       min: 200, max: 260 },
+  { cond: 'opening tee shot',     scene: 'First tee, find the fairway',                        min: 200, max: 270 },
+  { cond: 'closing hole',         scene: 'Last hole',                                          min: 140, max: 250 },
+];
+
+const FOCUS = {
+  full:    { label: 'full bag',    warmup: [40, 130],  main: [70, 290] },
+  wedges:  { label: 'wedges',      warmup: [30, 70],   main: [40, 130] },
+  short:   { label: 'short irons', warmup: [60, 110],  main: [90, 160] },
+  mid:     { label: 'mid irons',   warmup: [80, 140],  main: [140, 200] },
+  long:    { label: 'long game',   warmup: [100, 160], main: [180, 290] },
+};
+
+// hole templates define shot sequence per par type
+// each shot has a distance range [min, max]
+// ranges get clamped to the active focus range later
+const HOLE_TEMPLATES = {
+  3: [
+    // par 3: one shot
+    { shots: [[130, 220]] },
+    { shots: [[100, 160]] },  // short par 3
+    { shots: [[170, 230]] },  // long par 3
+  ],
+  4: [
+    // par 4: tee shot → approach
+    { shots: [[220, 280], [120, 180]] },
+    { shots: [[200, 250], [80, 140]] },   // shorter par 4
+    { shots: [[240, 290], [150, 200]] },  // long par 4
+    { shots: [[250, 280], [60, 100]] },   // short par 4, wedge in
+  ],
+  5: [
+    // par 5: tee shot → layup/iron → wedge
+    { shots: [[230, 280], [180, 220], [60, 110]] },
+    { shots: [[220, 270], [140, 190], [80, 130]] },
+    { shots: [[240, 280], [200, 260], [70, 100]] },  // go for it in two, still wedge cleanup
+  ],
+};
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function clamp(val, lo, hi) { return Math.max(lo, Math.min(hi, val)); }
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function getActiveFocuses() {
+  const active = document.querySelectorAll('#focus-group .pill.active');
+  const keys = Array.from(active).map(el => el.dataset.val);
+  return keys.length ? keys : ['full'];
+}
+
+function scenarioForDist(dist, lastCond) {
+  let valid = SCENARIOS.filter(s => dist >= s.min && dist <= s.max);
+  // avoid repeating the same condition back to back
+  if (valid.length > 1 && lastCond) {
+    const filtered = valid.filter(s => s.cond !== lastCond);
+    if (filtered.length) valid = filtered;
+  }
+  return valid.length ? pick(valid) : pick(SCENARIOS);
+}
+
+function generateWarmup(count, focusMin, focusMax) {
+  // ramp from short to long across the warmup
+  const shots = [];
+  for (let i = 0; i < count; i++) {
+    const t = count <= 1 ? 0 : i / (count - 1); // 0..1
+    const lo = Math.round(focusMin + (focusMax - focusMin) * t * 0.5);
+    const hi = Math.round(focusMin + (focusMax - focusMin) * (t * 0.5 + 0.3));
+    shots.push(rand(clamp(lo, focusMin, focusMax), clamp(hi, focusMin, focusMax)));
+  }
+  return shots;
+}
+
+function generateHoles(ballBudget, mainMin, mainMax) {
+  // build holes until we use up the ball budget
+  const holes = [];
+  let used = 0;
+
+  // decide par distribution: ~30% par 3, ~50% par 4, ~20% par 5
+  while (used < ballBudget) {
+    const remaining = ballBudget - used;
+    let par;
+    if (remaining <= 1) { par = 3; }
+    else if (remaining <= 2) { par = pick([3, 4]); }
+    else { par = pick([3, 3, 3, 4, 4, 4, 4, 4, 5, 5]); }
+
+    const template = pick(HOLE_TEMPLATES[par]);
+    const shotCount = template.shots.length;
+    if (used + shotCount > ballBudget) {
+      // not enough balls for this hole, try a smaller one
+      if (remaining >= 2) { par = 4; }
+      else { par = 3; }
+      const fallback = pick(HOLE_TEMPLATES[par]);
+      if (used + fallback.shots.length > ballBudget) break;
+      holes.push({ par, template: fallback });
+      used += fallback.shots.length;
+    } else {
+      holes.push({ par, template });
+      used += shotCount;
+    }
+  }
+
+  // generate actual shots from templates, clamped to focus range
+  const allShots = [];
+  let lastCond = null;
+  let holeNum = 1;
+
+  for (const hole of holes) {
+    const holeShots = [];
+    for (let i = 0; i < hole.template.shots.length; i++) {
+      const [tMin, tMax] = hole.template.shots[i];
+      // clamp template range to focus range
+      const lo = clamp(tMin, mainMin, mainMax);
+      const hi = clamp(tMax, mainMin, mainMax);
+      const dist = lo >= hi ? lo : rand(lo, hi);
+      const s = scenarioForDist(dist, lastCond);
+      lastCond = s.cond;
+      holeShots.push({ dist, cond: s.cond, scene: s.scene });
+    }
+    allShots.push({ par: hole.par, num: holeNum, shots: holeShots });
+    holeNum++;
+  }
+
+  return allShots;
+}
+
+function generateCooldown(count, focusMin, focusMax) {
+  // ramp from mid back down to short
+  const shots = [];
+  for (let i = 0; i < count; i++) {
+    const t = count <= 1 ? 1 : i / (count - 1); // 0..1
+    const mid = (focusMin + focusMax) / 2;
+    const lo = Math.round(mid - (mid - focusMin) * t);
+    const hi = Math.round(mid + (focusMax - mid) * (1 - t) * 0.3);
+    shots.push(rand(clamp(lo, focusMin, focusMax), clamp(Math.max(hi, lo), focusMin, focusMax)));
+  }
+  return shots;
+}
+
+function generate() {
+  const totalBalls = Math.max(5, parseInt(document.getElementById('balls-input').value) || 50);
+  const focusKeys = getActiveFocuses();
+  const focuses = focusKeys.map(k => FOCUS[k]);
+  const focusLabel = focuses.map(f => f.label).join(' + ');
+
+  const warmupMin = Math.min(...focuses.map(f => f.warmup[0]));
+  const warmupMax = Math.max(...focuses.map(f => f.warmup[1]));
+  const mainMin = Math.min(...focuses.map(f => f.main[0]));
+  const mainMax = Math.max(...focuses.map(f => f.main[1]));
+
+  const warmupCount = Math.max(3, Math.round(totalBalls * 0.15));
+  const cooldownCount = Math.max(2, Math.round(totalBalls * 0.1));
+  const mainCount = totalBalls - warmupCount - cooldownCount;
+
+  const now = new Date();
+  const date = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+  let ballNum = 0;
+
+  // ── header ──
+  let h = `
+    <div class="receipt-header">
+      <h1>Range Session</h1>
+      <div class="receipt-date">${date}</div>
+      <div class="receipt-focus">${focusLabel}</div>
+    </div>`;
+
+  // ── warmup: short to long ramp ──
+  h += `<div class="section-label">warmup &middot; ${warmupCount} balls</div>`;
+  const warmupShots = generateWarmup(warmupCount, warmupMin, warmupMax);
+  for (const dist of warmupShots) {
+    ballNum++;
+    h += `<div class="row">
+      <span class="row-num">${ballNum}</span>
+      <span class="row-dist">${dist} yd</span>
+      <span class="row-cond"></span>
+    </div>`;
+  }
+
+  // ── main session: holes ──
+  h += `<div class="dashes">- - - - - - - - - - - -</div>`;
+  h += `<div class="section-label">session &middot; ${mainCount} balls</div>`;
+  const holes = generateHoles(mainCount, mainMin, mainMax);
+
+  for (const hole of holes) {
+    // hole header
+    h += `<div class="row-hole">hole ${hole.num} &middot; par ${hole.par}</div>`;
+    for (const shot of hole.shots) {
+      ballNum++;
+      h += `<div class="row">
+        <span class="row-num">${ballNum}</span>
+        <span class="row-dist">${shot.dist} yd</span>
+        <span class="row-cond">${shot.cond}</span>
+      </div>
+      <div class="row-scene">${shot.scene}</div>`;
+    }
+  }
+
+  // ── cooldown ──
+  h += `<div class="dashes">- - - - - - - - - - - -</div>`;
+  h += `<div class="section-label">cooldown &middot; ${cooldownCount} balls</div>`;
+  const cooldownShots = generateCooldown(cooldownCount, warmupMin, warmupMax);
+  for (const dist of cooldownShots) {
+    ballNum++;
+    h += `<div class="row">
+      <span class="row-num">${ballNum}</span>
+      <span class="row-dist">${dist} yd</span>
+      <span class="row-cond"></span>
+    </div>`;
+  }
+
+  h += `
+    <div class="receipt-footer">
+      ${totalBalls} balls &middot; ${holes.length} holes &middot; ${focusLabel}
+    </div>`;
+
+  document.getElementById('receipt').innerHTML = h;
+}
+
+/* ── balls: quick-pick buttons set the input value ── */
+document.getElementById('balls-quick').addEventListener('click', e => {
+  const pill = e.target.closest('.pill-sm');
+  if (!pill) return;
+  document.getElementById('balls-input').value = pill.dataset.val;
+});
+
+/* ── focus: multi-select toggle ── */
+document.getElementById('focus-group').addEventListener('click', e => {
+  const pill = e.target.closest('.pill');
+  if (!pill) return;
+  pill.classList.toggle('active');
+  // ensure at least one is selected
+  if (!document.querySelector('#focus-group .pill.active')) {
+    pill.classList.add('active');
+  }
+});
+
+generate();
+</script>
+</body>
+</html>
